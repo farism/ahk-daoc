@@ -1,5 +1,3 @@
-#NoEnv
-
 pole_anytime = {f1}
 pole_side_snare = {f2}
 pole_side_snare_followup = {f3}

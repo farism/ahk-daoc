@@ -1,5 +1,3 @@
-#NoEnv
-
 spear_anytime = {f1}
 spear_side_snare = {f2}
 spear_side_followup = {f3}

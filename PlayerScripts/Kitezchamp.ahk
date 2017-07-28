@@ -1,5 +1,3 @@
-#NoEnv
-
 anytime = {f1}
 frontal = {f2}
 frontal_followup = {f3}

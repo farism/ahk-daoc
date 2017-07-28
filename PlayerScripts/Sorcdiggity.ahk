@@ -1,5 +1,3 @@
-#NoEnv
-
 demez = {f1}
 mez = {f2}
 amnesia = {f3}
@@ -20,5 +18,5 @@ CurrentWeapon("$4", "4", [], [demez, mez_ae, debuff_dex, debuff_dex_qui])
 CurrentWeapon("$5", "5", [], [demez, root, debuff_dex, debuff_dex_qui])
 CurrentWeapon("$e", "e", [], [amnesia])
 CurrentWeapon("$+e", "E", [], [debuff_dex, debuff_dex_qui])
-CurrentWeapon("$+v", "V", [], [speedwarp, Face(1000), Sleep(1000), Stick(1000)])
+CurrentWeapon("$+v", "V", [], [Face(), speedwarp, Sleep(1000), Stick()])
 CurrentWeapon("$+x", "X", [], [debuff_str, debuff_str_con])

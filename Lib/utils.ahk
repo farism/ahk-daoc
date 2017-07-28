@@ -4,90 +4,47 @@
 
 #Include <Include>
 
-; ui stuff
-
-qbar_frame_x = 0
-qbar_frame_y = 0
-qbar_frame_slot_width = 32
-pet_frame_x = 1165
-pet_frame_y = 755
-window_title := ""
-window_title := ""
-
-; set in /keyboard
-
-one_handed = {Left}
-two_handed = {Up}
-ranged = {Right}
-target_group1 = {Ins}
-target_group2 = {Del}
-target_group3 = {PgUp}
-target_group4 = {PgDn}
-target_group5 = !{Ins}
-target_group6 = !{Del}
-target_group7 = !{PgUp}
-target_group8 = !{PgDn}
-
-; set as a /qbind
-
-target_pet = {=}
-create_assist_macro = {Down}
-assist = {Home}
-face = {End}
-stick = {f11}
-
 IsDaoc() {
   return WinActive("ahk_exe game.dll")
 }
 
-DiffNow(prev) {
-  return (A_Now - prev) * 1000
-}
-
-_Sleep(sleep_dur) {
-  Sleep, %sleep_dur%
+_Sleep(duration) {
+  Sleep, %duration%
   return
 }
 
-_Stick(last_stick_dur) {
-  static last_stick := A_Now
-  global stick
-
-  if (DiffNow(last_stick) >= last_stick_dur) {
-    last_stick := A_Now
-    Send, %stick%
-  }
-
-  return
+Sleep(duration:=0, throttle:=0) {
+  return Throttle(Func("_Sleep"), throttle, duration)
 }
 
-_Face(last_face_dur) {
-  static last_face := A_Now
+_Assist() {
+  global assist
+  global assist_wait
+  Send, %assist%
+  Sleep, %assist_wait%
+}
+
+Assist(throttle:=1000) {
+  return Throttle(Func("_Assist"), throttle)
+}
+
+_Face() {
   global face
-
-  if (DiffNow(last_face) >= last_face_dur) {
-    last_face := A_Now
-    Send, %face%
-  }
-
-  return
+  global jump
+  Send, %face%
 }
 
-Sleep(args*) {
-  return Func("_Sleep").Bind(args*)
+Face(throttle:=1000) {
+  return Throttle(Func("_Face"), throttle)
 }
 
-Stick(args*) {
-  return Func("_Stick").Bind(args*)
-}
-
-Face(args*) {
-  return Func("_Face").Bind(args*)
+Stick(throttle:=1000) {
+  global stick
+  return Throttle(stick, throttle)
 }
 
 IsInCombat(){
-  PixelGetColor, color, 1915, 1075
-
+  PixelGetColor, color, A_ScreenWidth - 10, A_ScreenHeight - 10
   return color = 0x0000FF
 }
 
@@ -98,28 +55,24 @@ EquipCurrentWeapon() {
 EquipOneHanded() {
   global one_handed
   Send, %one_handed%
-
   return
 }
 
 EquipTwoHanded() {
   global two_handed
   Send, %two_handed%
-
   return
 }
 
 EquipRanged() {
   global ranged
   Send, %ranged%
-
   return
 }
 
 TargetPet() {
   global targe_pet
   Send, %target_pet%
-
   return
 }
 
@@ -132,6 +85,7 @@ TargetGroup(position) {
   global target_group6
   global target_group7
   global target_group8
+
   key := %target_group%%position%
   ; Send, %target_pet%
 
@@ -175,21 +129,25 @@ StyleChain(styles, reactionary_style_chain:=false) {
 
 SpellChain(spells) {
   Chain(spells)
-
   return
 }
 
 HotkeyHandler(send_key, styles, spells, equip_fn, reactionary_style_chain:=false) {
-  Send, %send_key%
-
   if(IsDaoc()) {
     equipFn := Func(equip_fn)
-    styleChain := Func("StyleChain").Bind(styles, reactionary_style_chain)
-    spellChain := Func("SpellChain").Bind(spells, false)
     %equipFn%()
+
+    Send, %send_key%
+
+    spellChain := Func("SpellChain").Bind(spells, false)
     %spellChain%()
+
+    styleChain := Func("StyleChain").Bind(styles, reactionary_style_chain)
     %styleChain%()
+  } else {
+    Send, %send_key%
   }
+
   return
 }
 
@@ -226,6 +184,7 @@ Pet(hotkey, send_key, spells) {
 
 Click(button, x, y, speed:=0) {
   MouseClick, %button%, %x%, %y%, 1, %speed%
+  return
 }
 
 GetSlotX(slot) {
@@ -254,6 +213,7 @@ GoToSlot(bank, slot) {
   y := GetSlotY(slot)
   MouseMove, %x%, %y%, 0
   GoToBank(bank)
+  return
 }
 
 ClearMacro(bank, slot) {
@@ -261,11 +221,13 @@ ClearMacro(bank, slot) {
   Send, {Shift down}
   MouseClick, right
   Send, {Shift up}
+  return
 }
 
 AddMacro(bank, slot) {
   GoToSlot(bank, slot)
   MouseClick
+  return
 }
 
 AddQbind(bank, slot, key, bar:=1) {
@@ -277,7 +239,7 @@ AddQbind(bank, slot, key, bar:=1) {
 AddMacroAndQbind(bank, slot, key, bar:=1) {
   ClearMacro(bank, slot)
   AddMacro(bank, slot)
-  AddQbind(bank, slot, key)
+  AddQbind(bank, slot, key, bar)
 }
 
 AddStandardQbinds(bank, bar:=1) {
@@ -301,31 +263,32 @@ AddFnQbindsToBar(bank, modifier="", bar:=1, count:=10) {
   return
 }
 
-AddPetTargetQbind(bank, slot, key, bar:=1) {
+AddPetTarget(bank, slot, key, bar:=1) {
   global pet_frame_x
   global pet_frame_y
+
   Send, {Shift down}
   Click(left, pet_frame_x, pet_frame_y)
   Send, {Shift up}
   AddMacroAndQbind(bank, slot, key, bar)
 }
 
-AddStickQbind(bank, slot, key, bar:=1) {
+AddStickToQbar(bank, slot, key, bar:=1) {
   Send, /macro stick /stick{Enter}
   AddMacroAndQbind(bank, slot, key, bar)
 }
 
-AddFaceQbind(bank, slot, key, bar:=1) {
+AddFaceToQbar(bank, slot, key, bar:=1) {
   Send, /macro face /face{Enter}
   AddMacroAndQbind(bank, slot, key, bar)
 }
 
-AddCreateAssistQbind(bank, slot, key, bar:=1) {
+AddCreateAssistToQbar(bank, slot, key, bar:=1) {
   Send, /macro assist /macro assist /assist `%T{Enter}
   AddMacroAndQbind(bank, slot, key, bar)
 }
 
-AddAssistQbind(bank, slot, key, bar:=1) {
+AddAssistToQbar(bank, slot, key, bar:=1) {
   AddQbind(bank, slot, key, bar)
 }
 
@@ -340,23 +303,27 @@ SetupKeyboard() {
     AddStandardQbinds(5)
     AddFnQbindsToBar(6)
     AddFnQbindsToBar(7, "!")
-    AddPetTargetQbind(10, 7, target_pet)
-    AddStickQbind(10, 8, stick)
-    AddFaceQbind(10, 9, face)
-    AddCreateAssistQbind(10, 10, create_assist_macro)
-    AddAssistQbind(1, 10, assist)
+    AddPetTarget(10, 7, target_pet)
+    AddStickToQbar(10, 8, stick)
+    AddFaceToQbar(10, 9, face)
+    AddCreateAssistToQbar(10, 10, create_assist_macro)
+    AddAssistToQbar(1, 10, assist)
   }
+
+  return
 }
 
 LoadPlayerScript() {
-  WinGetActiveTitle, current_title
+  if(IsDaoc()) {
+    WinGetActiveTitle, current_title
 
-  Gui, Margin, 5, 20
-  Gui, Font, S10, Verdana
-  Gui, Add, Edit, w300 R1 Limit80 vwindow_title, %current_title%
-  Gui, Add, Button, +5 0x8000 w55 h25, &Cancel
-  Gui, Add, Button, default x+5 0x8000 w55 h25 gSubmitPlayerScript, &Apply
-  Gui, Show, , Enter Player Name
+    Gui, Margin, 5, 20
+    Gui, Font, S10, Verdana
+    Gui, Add, Edit, w300 R1 Limit80 vwindow_title, %current_title%
+    Gui, Add, Button, +5 0x8000 w55 h25, &Cancel
+    Gui, Add, Button, default x+5 0x8000 w55 h25 gSubmitPlayerScript, &Apply
+    Gui, Show, , Enter Player Name
+  }
 
   return
 }
@@ -370,8 +337,14 @@ SubmitPlayerScript() {
 
   if(IsDaoc()) {
     WinSetTitle, %window_title%
-    Sleep, 100
-    Include(A_ScriptDir . "\PlayerScripts\" . window_title . ".ahk")
+
+    player_script_file := A_ScriptDir . "\PlayerScripts\" . window_title . ".ahk"
+
+    if(FileExist(player_script_file)) {
+      Include(player_script_file, player_script_file)
+    } else {
+      MsgBox, Player script does not exist: %player_script_file%
+    }
   }
 
   return

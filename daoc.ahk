@@ -1,7 +1,9 @@
 SetWorkingDir %A_ScriptDir%
 #NoEnv
+#Persistent
 #WinActivateForce
 #SingleInstance force
+#Include config.ahk
 #Include <Include>
 #Include lib/utils.ahk
 
@@ -14,6 +16,7 @@ SetWorkingDir %A_ScriptDir%
   Reload()
 return
 
+; Assign Ctrl-Alt-E as a hotkey to prompt loading a player script
 +!e::LoadPlayerScript()
 
 ; Assign Ctrl-Alt-S as a hotkey to suspend the script.

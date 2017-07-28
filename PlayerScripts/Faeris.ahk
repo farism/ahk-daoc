@@ -1,5 +1,3 @@
-#NoEnv
-
 stealth = {f1}
 mount = {f2}
 dismount = {f3}
